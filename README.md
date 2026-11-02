@@ -6,7 +6,7 @@ This is a regular native Xcode application, not a Swift Playground and not a Saf
 
 The native project, local artwork, permission descriptions, a shared build/run scheme, XCTest routing tests and Mac build/test scripts are included. The glass home, horizontal YouTube / Google / RAEE-Industries shortcuts, XENPHIA panel, voice routing, languages, private tabs and device-test checklist are carried forward.
 
-This environment has no macOS, Apple SDK, simulator or signing identity. The project has not been compiled, signed, installed or visually verified as a standalone app. There is no installable IPA or TestFlight link in this package. Do not rename this ZIP to IPA.
+This environment has no macOS, Apple SDK, simulator or signing identity. The project compiled successfully on the cloud Mac. Simulator verification is in progress; it has not been signed, installed on a physical iPad or visually verified as a standalone app. There is no installable IPA or TestFlight link in this package. Do not rename this ZIP to IPA.
 
 ## Build and personally test for free on a Mac
 
@@ -32,7 +32,7 @@ From this directory:
 ./scripts/test-ipad-simulator.sh
 ```
 
-The first script performs an unsigned simulator build. The second runs the app-hosted routing tests on an available iPad simulator. Results are saved under `build/`; the scripts do not upload artifacts or run cloud jobs. Use the Xcode GUI to select your signing team and install on your personal device.
+The first script performs an unsigned simulator build. The second runs the app-hosted routing tests on an available iPad simulator at iOS 18.4 or later. It applies a simulator-only 18.4 deployment override for the documented Xcode 16.4 / iOS 18.5 WebKit loader bug; the app project retains its iPadOS 17 minimum. Results are saved under `build/`; the scripts do not upload artifacts or run cloud jobs. Use the Xcode GUI to select your signing team and install on your personal device.
 
 ## Distribution later
 
