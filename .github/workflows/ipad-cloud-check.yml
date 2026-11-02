@@ -1,0 +1,71 @@
+name: XENPHIA iPad cloud check
+
+# Public repository: run on source updates or manual dispatch. No signing or distribution.
+'on':
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      private_allowance_confirmed:
+        description: 'For a private repository: free Actions allowance and a zero-spend blocking budget have been checked.'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xenphia-ipad-cloud-check
+  cancel-in-progress: true
+
+jobs:
+  compile-and-test:
+    # No runner is started on a private repository until this input is true.
+    if: ${{ github.event.repository.private == false || inputs.private_allowance_confirmed }}
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Locate the standalone project
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          matches = list(Path('.').glob('**/XenphiaGlass.xcodeproj'))
+          matches = [p for p in matches if not any(part in ('.git', 'build', 'node_modules') for part in p.parts)]
+          if len(matches) != 1:
+              raise SystemExit(f'Expected one native project, found {len(matches)}. Keep only the intended standalone project in this branch.')
+          root = str(matches[0].parent.resolve())
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write('XENPHIA_PROJECT_ROOT=' + root + '\n')
+          PY
+      - name: Show Apple build-tool version
+        run: xcodebuild -version
+      - name: Build unsigned simulator application
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$XENPHIA_PROJECT_ROOT"
+          ./scripts/build-simulator.sh
+      - name: Test routing on an iPad simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$XENPHIA_PROJECT_ROOT"
+          ./scripts/test-ipad-simulator.sh
+      - name: Explain result scope
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## XENPHIA standalone iPad verification'
+            echo 'Check the Build and Test steps above for the actual outcome.'
+            echo 'This workflow does not sign, distribute or install the app on a physical iPad.'
+            echo 'No signing credentials, release upload, artifact upload or Actions cache are used.'
+          } >> "$GITHUB_STEP_SUMMARY"
